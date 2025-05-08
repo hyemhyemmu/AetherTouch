@@ -42,9 +42,10 @@
 出于自定义的目的，用户需要自行准备 YOLOv5 ONNX 格式模型文件，并命名为`model.onnx`放置在项目根目录下。
 
 以下是笔者建议的几个模型选择，用户可以根据设备性能和需求自行选择：
-[YOLOv5-Lite-v1.5](https://github.com/ppogg/YOLOv5-Lite/releases/tag/v1.5)
-[YOLOv5 v7.0 5s](https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5s.onnx)
-[YOLOv5 v7.0 5s-seg](https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5s-seg.pt)
+
+- [YOLOv5-Lite-v1.5](https://github.com/ppogg/YOLOv5-Lite/releases/tag/v1.5)
+- [YOLOv5 v7.0 5s](https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5s.onnx)
+- [YOLOv5 v7.0 5s-seg](https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5s-seg.pt)
 
 ## 使用方法
 
