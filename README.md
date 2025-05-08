@@ -19,7 +19,7 @@
 - **数据分析**：记录用户交互并生成可视化报告
 - **模型优化**：可选的 ONNX Runtime 优化以提高推理速度
 
-## 硬件要求
+## 硬件配置
 
 - 树莓派 4B（推荐）
 - 兼容树莓派的摄像头模块
@@ -27,7 +27,7 @@
 - 连接到 GPIO 引脚的蜂鸣器（默认：G18）
 - 可选的"teeth"组件（控制按钮）
 
-## 软件要求
+## 软件配置
 
 - Python 3.7+
 - OpenCV
@@ -36,16 +36,6 @@
 - RPi.GPIO
 - 可选：用于模型优化的 ONNX Runtime
 - 可选：用于数据可视化的 Pandas 和 Matplotlib
-
-3. 下载 YOLOv5 ONNX 模型：
-
-出于自定义的目的，用户需要自行准备 YOLOv5 ONNX 格式模型文件，并命名为`model.onnx`放置在项目根目录下。
-
-以下是笔者建议的几个模型选择，用户可以根据设备性能和需求自行选择：
-
-- [YOLOv5-Lite-v1.5](https://github.com/ppogg/YOLOv5-Lite/releases/tag/v1.5)
-- [YOLOv5 v7.0 5s](https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5s.onnx)
-- [YOLOv5 v7.0 5s-seg](https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5s-seg.pt)
 
 ## 使用方法
 
@@ -99,9 +89,19 @@ python aether.py --log --optimize
 
 报告保存在`reports`目录中。
 
-## 模型训练
+## 模型
 
-系统使用 YOLOv5 物体检测模型，该模型经过训练可以识别 LED 灯、蜂鸣器和控制按钮。以下笔者提供一个可以自己训练模型的方法：
+系统使用 YOLOv5 物体检测模型，该模型经过训练可以识别 LED 灯、蜂鸣器和控制按钮。
+
+用户可以自行准备 YOLOv5 ONNX 格式模型文件，并命名为`model.onnx`放置在项目根目录下。
+
+以下是笔者建议的几个模型选择，用户可以根据设备性能和需求自行选择：
+
+- [YOLOv5-Lite-v1.5](https://github.com/ppogg/YOLOv5-Lite/releases/tag/v1.5)
+- [YOLOv5 v7.0 5s](https://github.com/ultralytics/yolov5/releases/download/v7.0/)
+- [YOLOv5 v7.0 5s-seg](https://github.com/ultralytics/yolov5/releases/download/v7.0/)
+
+以下笔者提供一个训练模型的方法：
 
 1. 使用以下命令收集图像：
 
