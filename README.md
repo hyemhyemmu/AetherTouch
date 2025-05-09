@@ -93,9 +93,14 @@ python aether.py --log --optimize
 
 系统使用 YOLOv5 物体检测模型，该模型经过训练可以识别 LED 灯、蜂鸣器和控制按钮。
 
+项目中提供的模型包含前述的所有指令。采集数据后，使用RoboFlow进行数据标注，利用YOLOv5s进行迁移训练
+
 用户可以自行准备 YOLOv5 ONNX 格式模型文件，并命名为`model.onnx`放置在项目根目录下。
 
-以下是笔者建议的几个模型选择，用户可以根据设备性能和需求自行选择：
+
+
+自定义模型：
+以下是笔者建议的几个模型选择，可以根据设备性能和需求自行选择：
 
 - [YOLOv5-Lite-v1.5](https://github.com/ppogg/YOLOv5-Lite/releases/tag/v1.5)
 - [YOLOv5 v7.0 5s](https://github.com/ultralytics/yolov5/releases/download/v7.0/)
@@ -103,13 +108,14 @@ python aether.py --log --optimize
 
 以下笔者提供一个训练模型的方法：
 
-1. 使用以下命令收集图像：
+1. 收集图像：
 
 ```bash
 python img_collection.py
 ```
+根据需要自行增加手势或者元器件
 
-2. 标记图像并将其转换为 YOLOv5 格式：
+2. 标记图像（比如使用labelImg, RoboFlow）并将其转换为 YOLOv5 格式：
 
 ```bash
 python lablemetoyolo.py
@@ -117,7 +123,7 @@ python lablemetoyolo.py
 
 3. 按照[YOLOv5 文档](https://github.com/ultralytics/yolov5)训练 YOLOv5 模型
 
-4. 导出为 ONNX 格式并放置在项目目录中
+4. 导出为 ONNX 格式并放置在项目根目录中，命名为`model.onnx`
 
 ## 开发
 
