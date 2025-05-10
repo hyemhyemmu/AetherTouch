@@ -11,6 +11,9 @@ import argparse
 import os
 import random
 
+# Import gesture configuration constants
+from label_config import OBJECT_IDS, GESTURE_ACTIONS, DEVICE_TYPES, ACTION_TYPES, LABEL_NAMES
+
 # ----- PARAMETERS/VARIABLES ------
 
 # camera resolution
@@ -281,7 +284,7 @@ def music_off():
     """Turn off music"""
     global m_music_player
     
-    if m_music_player.isAlive() == True:
+    if m_music_player.is_alive() == True:
         m_music_player.stop_playback()
         time.sleep(0.1)
         m_music_player.join()  
@@ -341,21 +344,41 @@ def apply_gesture_action(gesture, pos, boxes, ids, scores, labels, logger=None):
     """
     action_performed = False
     
+    if gesture == "ALL_OFF":
+        all_off()
+        action_performed = True
+        
+        # Log the interaction
+        if logger:
+            logger.record_event("OFF", "ALL", gesture, 0)
+        return action_performed
+            
+    elif gesture == "ALL_ON":
+        # Turn on all devices
+        light_on()
+        music_on()
+        action_performed = True
+        
+        # Log the interaction
+        if logger:
+            logger.record_event("ON", "ALL", gesture, 0)
+        return action_performed
+    
     # Process based on gesture type
     if gesture == "POINTING":
         # Check if pointing at any object
         for box, score, id in zip(boxes, scores, ids):
             if check_point_in_box(pos, box):
-                if id == 0:  # LED
+                if id == OBJECT_IDS["LED"]:  # Use constant instead of 0
                     device, action, level = light_on()
                     action_performed = True
-                elif id == 1:  # Buzzer
+                elif id == OBJECT_IDS["BUZZER"]:  # Use constant instead of 1
                     device, action, level = music_on()
                     action_performed = True
-                elif id == 2:  # Teeth (off button)
+                elif id == OBJECT_IDS["FIST"]:  # Use constant instead of 2
                     actions = all_off()
                     action_performed = True
-                    device, action, level = "ALL", "OFF", 0
+                    device, action, level = DEVICE_TYPES["ALL"], ACTION_TYPES["OFF"], 0
                 
                 # Log the interaction
                 if logger and action_performed:
@@ -364,7 +387,7 @@ def apply_gesture_action(gesture, pos, boxes, ids, scores, labels, logger=None):
     elif gesture == "BRIGHTNESS_CONTROL":
         # Find LED in detected objects
         for box, score, id in zip(boxes, scores, ids):
-            if id == 0:  # LED
+            if id == OBJECT_IDS["LED"]:  # Use constant instead of 0
                 # Calculate brightness based on vertical position
                 # Lower position = brighter
                 _, screen_height = CAMERA_WIDTH, CAMERA_HEIGHT  
@@ -382,7 +405,7 @@ def apply_gesture_action(gesture, pos, boxes, ids, scores, labels, logger=None):
     elif gesture == "VOLUME_CONTROL":
         # Find buzzer in detected objects
         for box, score, id in zip(boxes, scores, ids):
-            if id == 1:  # Buzzer
+            if id == OBJECT_IDS["BUZZER"]:  # Use constant instead of 1
                 # Calculate volume based on vertical position
                 # Lower position = louder
                 _, screen_height = CAMERA_WIDTH, CAMERA_HEIGHT  
@@ -396,25 +419,6 @@ def apply_gesture_action(gesture, pos, boxes, ids, scores, labels, logger=None):
                 if logger:
                     logger.record_event(action, device, gesture, 0)
                 break
-                
-    elif gesture == "ALL_ON":
-        # Turn on all devices
-        light_on()
-        music_on()
-        action_performed = True
-        
-        # Log the interaction
-        if logger:
-            logger.record_event("ON", "ALL", gesture, 0)
-            
-    elif gesture == "ALL_OFF":
-        # Turn off all devices
-        all_off()
-        action_performed = True
-        
-        # Log the interaction
-        if logger:
-            logger.record_event("OFF", "ALL", gesture, 0)
     
     return action_performed
 
@@ -426,6 +430,11 @@ if __name__=="__main__":
     parser.add_argument('--model-path', type=str, help='Custom path to ONNX model file')
     args = parser.parse_args()
     
+    # Initialize system with all devices turned off by default
+    print("Initialize... All devices closed by default")
+    light_off()
+    music_off()
+    
     # Initialize the enhanced gesture recognizer
     gesture_recognizer = GestureRecognizer()
     
@@ -434,8 +443,8 @@ if __name__=="__main__":
     if args.log:
         interaction_logger = InteractionTracker()
     
-    # YOLO model loading
-    dic_labels = {0:'GPIO LED', 1:'buzzer', 2:'fist', 3:'open_palm', 4:'pinch', 5:'pointing', 6:'two_fingers'}
+    # YOLO model loading - use label names from label_config
+    dic_labels = LABEL_NAMES  # Use the centralized label definitions
     model_h = MODEL_HEIGHT
     model_w = MODEL_WIDTH
     
@@ -480,20 +489,30 @@ if __name__=="__main__":
             gesture, finger_pos, annotated_frame = gesture_recognizer.recognize_gestures(img0)
             
             # Object detection visualization
+            detected_fist = False  # Add fist detection flag
             for box, score, id in zip(det_boxes_show, scores_show, ids_show):
                 label = f'{dic_labels.get(id, f"Unknown-{id}")}:{score:.2f}'
                 plot_one_box(box, annotated_frame, color=(255,0,0), label=label, line_thickness=None)
-            
-            # Process gestures and interactions
-            action_taken = apply_gesture_action(
-                gesture, 
-                finger_pos, 
-                det_boxes_show, 
-                ids_show, 
-                scores_show, 
-                dic_labels,
-                interaction_logger
-            )
+                
+                # Use constant instead of hardcoded number 2
+                if id == OBJECT_IDS["FIST"] and score > 0.5:  # Using constant OBJECT_IDS["FIST"] instead of 2
+                    detected_fist = True
+                    print("Detected fist gesture - Turning off all devices")
+                    all_off()
+                    if interaction_logger:
+                        interaction_logger.record_event(ACTION_TYPES["OFF"], DEVICE_TYPES["ALL"], "FIST", 0)
+    
+            if not detected_fist:
+                # Process gestures and interactions
+                action_taken = apply_gesture_action(
+                    gesture, 
+                    finger_pos, 
+                    det_boxes_show, 
+                    ids_show, 
+                    scores_show, 
+                    dic_labels,
+                    interaction_logger
+                )
             
             # Add FPS information
             cv2.putText(

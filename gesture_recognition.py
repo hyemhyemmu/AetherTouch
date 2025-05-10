@@ -91,7 +91,9 @@ class GestureRecognizer:
                 is_pinky_open = self._is_finger_open(hand_landmarks, 4, image_width, image_height)
                 
                 # Recognize gestures
-                if thumb_to_index_distance < self.pinch_threshold * image_width:
+                if not any([is_thumb_open, is_index_open, is_middle_open, is_ring_open, is_pinky_open]):
+                    gesture = "ALL_OFF"  
+                elif thumb_to_index_distance < self.pinch_threshold * image_width:
                     gesture = "BRIGHTNESS_CONTROL"
                 elif is_index_open and not is_middle_open and not is_ring_open and not is_pinky_open:
                     gesture = "POINTING"
@@ -99,8 +101,6 @@ class GestureRecognizer:
                     gesture = "VOLUME_CONTROL"
                 elif all([is_index_open, is_middle_open, is_ring_open, is_pinky_open]):
                     gesture = "ALL_ON"
-                elif not any([is_thumb_open, is_index_open, is_middle_open, is_ring_open, is_pinky_open]):
-                    gesture = "ALL_OFF"
                 else:
                     gesture = "UNKNOWN"
                 
@@ -179,4 +179,3 @@ class GestureRecognizer:
             return np.linalg.norm(tip - wrist) > np.linalg.norm(pip - wrist)
         else:
             return dist_tip_pip > self.finger_open_threshold * dist_pip_mcp
-        
