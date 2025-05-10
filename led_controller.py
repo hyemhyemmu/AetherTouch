@@ -6,7 +6,7 @@ class LEDController:
     LED Control Module
     
     Controls an LED connected to Raspberry Pi GPIO pin.
-    Provides simple on/off functionality.
+    Provides both on/off functionality and brightness control using PWM.
     """
     def __init__(self, pin):
         """
@@ -27,22 +27,59 @@ class LEDController:
         # Configure pin as output
         GPIO.setup(self.pin, GPIO.OUT)
         
-        # Initial state: off
-        GPIO.output(self.pin, GPIO.LOW)
+        # Initialize PWM with 100Hz frequency (good for LED control)
+        self.pwm = GPIO.PWM(self.pin, 100)
         
-    def turn_on(self):
+        # Current brightness level (0-100)
+        self.brightness = 0
+        
+        # Start PWM with duty cycle 0 (LED off)
+        self.pwm.start(0)
+        
+    def turn_on(self, brightness=100):
         """
-        Turn on the LED
-        Sets the pin to HIGH state
+        Turn on the LED with specified brightness
+        
+        Args:
+            brightness: Brightness level from 0 to 100 (default: 100)
         """
-        GPIO.output(self.pin, GPIO.HIGH)
+        # Ensure brightness is within valid range
+        brightness = max(0, min(100, brightness))
+        self.brightness = brightness
+        
+        # Update PWM duty cycle
+        self.pwm.ChangeDutyCycle(brightness)
         
     def turn_off(self):
         """
         Turn off the LED
-        Sets the pin to LOW state
+        Sets the PWM duty cycle to 0
         """
-        GPIO.output(self.pin, GPIO.LOW)
+        self.brightness = 0
+        self.pwm.ChangeDutyCycle(0)
+    
+    def set_brightness(self, level):
+        """
+        Set LED brightness level
+        
+        Args:
+            level: Brightness level from 0 to 100
+        """
+        # Ensure brightness is within valid range
+        level = max(0, min(100, level))
+        self.brightness = level
+        
+        # Update PWM duty cycle
+        self.pwm.ChangeDutyCycle(level)
+        
+    def get_brightness(self):
+        """
+        Get current brightness level
+        
+        Returns:
+            int: Current brightness level (0-100)
+        """
+        return self.brightness
     
     # Maintain backward compatibility with original method names
     on = turn_on

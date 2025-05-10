@@ -11,6 +11,7 @@ class MusicPlayer(threading.Thread):
     Well... why can't a buzzer be called as a music player...
     Plays musical notes from a file using a buzzer connected to a GPIO pin.
     Runs in a separate thread for background playback.
+    Volume can be controlled by adjusting PWM duty cycle.
     """
     def __init__(self, pin):
         """
@@ -36,6 +37,9 @@ class MusicPlayer(threading.Thread):
         
         # Flag to stop playback
         self.flag_stop = False
+        
+        # Volume control (PWM duty cycle, 0-100)
+        self.volume = 50
        
     def load_music_file(self, file_music):
         """
@@ -84,6 +88,26 @@ class MusicPlayer(threading.Thread):
         else:
             return True
     
+    def set_volume(self, level):
+        """
+        Set volume level by adjusting PWM duty cycle
+        
+        Args:
+            level: Volume level from 0 to 100
+        """
+        # Ensure volume is within valid range
+        self.volume = max(0, min(100, level))
+        return self.volume
+    
+    def get_volume(self):
+        """
+        Get current volume level
+        
+        Returns:
+            int: Current volume level (0-100)
+        """
+        return self.volume
+    
     def stop_playback(self):
         """
         Stop music playback
@@ -98,7 +122,7 @@ class MusicPlayer(threading.Thread):
         
         # Define PWM object
         buzzer = GPIO.PWM(self.pin_buzzer, 440)
-        buzzer.start(50)
+        buzzer.start(self.volume)
         
         while True:
             if self.flag_stop:
@@ -108,6 +132,8 @@ class MusicPlayer(threading.Thread):
                 if self.flag_stop:
                     break
                 buzzer.ChangeFrequency(freq)
+                # Apply current volume setting
+                buzzer.ChangeDutyCycle(self.volume)
                 time.sleep(self.delay_beat * beat)
                 
         buzzer.stop()        

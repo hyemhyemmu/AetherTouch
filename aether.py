@@ -222,7 +222,8 @@ def light_on(level=None):
     if level is not None:
         brightness_level = level
         
-    m_light.turn_on()
+    # 使用PWM控制亮度
+    m_light.turn_on(brightness_level)
     print(f"Light turned on (brightness: {brightness_level}%)")
     return "LED", "ON", brightness_level
 
@@ -236,18 +237,19 @@ def light_off():
 def set_brightness(level):
     """Set LED brightness level"""
     global brightness_level
+    global m_light
     
     # Clamp level between 0-100%
     brightness_level = max(0, min(100, level))
     
-    # Implement with PWM if hardware supports it
-    # For now, just turn on/off based on threshold
+    # 使用PWM控制亮度
     if brightness_level > 0:
-        light_on(brightness_level)
+        m_light.set_brightness(brightness_level)
+        print(f"Brightness set to {brightness_level}%")
     else:
-        light_off()
+        m_light.turn_off()
+        print("Light turned off (brightness: 0%)")
     
-    print(f"Brightness set to {brightness_level}%")
     return "LED", "BRIGHTNESS", brightness_level
 
 def music_on(volume=None):
@@ -262,6 +264,8 @@ def music_on(volume=None):
         # Create and start thread if not running
         m_music_player = MusicPlayer(gpio_pins['G18'])
         m_music_player.load_music_file(MUSIC_FILE)
+        # 设置音量
+        m_music_player.set_volume(volume_level)
         m_music_player.daemon = True
         m_music_player.start()
         
@@ -274,6 +278,8 @@ def music_on(volume=None):
         # Reload and start
         m_music_player = MusicPlayer(gpio_pins['G18'])
         m_music_player.load_music_file(MUSIC_FILE)
+        # 设置音量
+        m_music_player.set_volume(volume_level)
         m_music_player.daemon = True
         m_music_player.start()
     
@@ -295,18 +301,23 @@ def music_off():
 def set_volume(level):
     """Set music volume level"""
     global volume_level
+    global m_music_player
     
     # Clamp level between 0-100%
     volume_level = max(0, min(100, level))
     
-    # Implement volume control if hardware supports it
-    # For now, just turn on/off based on threshold
+    # 使用PWM控制音量
     if volume_level > 0:
-        music_on(volume_level)
+        if m_music_player.is_alive():
+            # 如果音乐播放器正在运行，直接设置音量
+            m_music_player.set_volume(volume_level)
+            print(f"Volume set to {volume_level}%")
+        else:
+            # 如果音乐播放器未运行，启动它并设置音量
+            music_on(volume_level)
     else:
         music_off()
     
-    print(f"Volume set to {volume_level}%")
     return "BUZZER", "VOLUME", volume_level
 
 def all_off():
