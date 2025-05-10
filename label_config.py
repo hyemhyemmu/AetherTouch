@@ -51,8 +51,9 @@ ACTION_TYPES = {
     "VOLUME": "VOLUME"
 }
 
-# For backward compatibility with tools/labelmetoyolo.py
-# Class labels mapped to their corresponding index values
+# Configuration for mapping class names from LabelMe JSON files
+# to their corresponding integer IDs for YOLO format conversion.
+# Used by the tools/labelmetoyolo.py script.
 class_labels = {
     'led': 0,       # LED light component
     'buzzer': 1,    # Buzzer/speaker component

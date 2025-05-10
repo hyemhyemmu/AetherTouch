@@ -81,6 +81,25 @@ class LEDController:
         """
         return self.brightness
     
+    def cleanup(self):
+        """
+        Clean up GPIO resources for this LED.
+        Stops PWM and releases the GPIO pin.
+        """
+        try:
+            self.pwm.stop()  # Stop PWM
+        except Exception as e:
+            print(f"Error stopping PWM for pin {self.pin}: {e}")
+        finally:
+            try:
+                # Only cleanup the specific pin if it was setup by this instance
+                # This check might be more complex depending on how GPIO.cleanup() works
+                # with multiple components. For now, we assume direct cleanup is fine.
+                GPIO.cleanup(self.pin) 
+                print(f"GPIO pin {self.pin} cleaned up.")
+            except Exception as e:
+                print(f"Error cleaning up GPIO pin {self.pin}: {e}")
+    
     # Maintain backward compatibility with original method names
     on = turn_on
     off = turn_off

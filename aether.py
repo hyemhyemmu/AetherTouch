@@ -43,10 +43,10 @@ brightness_level = 100
 volume_level = 100
 
 # Define LED object
-m_light = LEDController(gpio_pins["G17"])
+m_light = LEDController(gpio_pins["LED_PIN"])
 
 # Define buzzer object
-m_music_player = MusicPlayer(gpio_pins['G18'])
+m_music_player = MusicPlayer(gpio_pins['BUZZER_PIN'])
 
 # The pretrained model file (users need to provide their own)
 DEFAULT_MODEL = "model.onnx"
@@ -225,14 +225,14 @@ def light_on(level=None):
     # 使用PWM控制亮度
     m_light.turn_on(brightness_level)
     print(f"Light turned on (brightness: {brightness_level}%)")
-    return "LED", "ON", brightness_level
+    return DEVICE_TYPES["LED"], ACTION_TYPES["ON"], brightness_level # 使用常量
 
 def light_off():
     """Turn off LED"""
     global m_light
     m_light.turn_off()
     print("Light turned off")
-    return "LED", "OFF", 0
+    return DEVICE_TYPES["LED"], ACTION_TYPES["OFF"], 0 # 使用常量
 
 def set_brightness(level):
     """Set LED brightness level"""
@@ -250,7 +250,7 @@ def set_brightness(level):
         m_light.turn_off()
         print("Light turned off (brightness: 0%)")
     
-    return "LED", "BRIGHTNESS", brightness_level
+    return DEVICE_TYPES["LED"], ACTION_TYPES["BRIGHTNESS"], brightness_level # 使用常量
 
 def music_on(volume=None):
     """Turn on music with optional volume level"""
@@ -260,9 +260,11 @@ def music_on(volume=None):
     if volume is not None:
         volume_level = volume
     
-    if m_music_player.is_alive() == False:
+    if not m_music_player.is_alive(): # 简化条件判断
         # Create and start thread if not running
-        m_music_player = MusicPlayer(gpio_pins['G18'])
+        # 确保在重新创建实例前，旧的 GPIO 引脚已清理 (如果 MusicPlayer 内部处理了)
+        # 或者在这里添加对旧 m_music_player 实例的清理调用 (如果它有 cleanup 方法)
+        m_music_player = MusicPlayer(gpio_pins['BUZZER_PIN']) # 使用常量
         m_music_player.load_music_file(MUSIC_FILE)
         # 设置音量
         m_music_player.set_volume(volume_level)
@@ -272,31 +274,31 @@ def music_on(volume=None):
     else: 
         # Restart if already playing
         m_music_player.stop_playback()
-        time.sleep(0.1)
-        m_music_player.join()
+        # time.sleep(0.1) # Consider if this sleep is strictly necessary
+        # m_music_player.join() # join() might block longer than intended if not careful
 
-        # Reload and start
-        m_music_player = MusicPlayer(gpio_pins['G18'])
+        # Re-create and start
+        # 同上，注意 GPIO 清理
+        m_music_player = MusicPlayer(gpio_pins['BUZZER_PIN']) # 使用常量
         m_music_player.load_music_file(MUSIC_FILE)
-        # 设置音量
         m_music_player.set_volume(volume_level)
         m_music_player.daemon = True
         m_music_player.start()
     
     print(f"Music started (volume: {volume_level}%)")
-    return "BUZZER", "ON", volume_level
+    return DEVICE_TYPES["BUZZER"], ACTION_TYPES["ON"], volume_level # 使用常量
     
 def music_off():
     """Turn off music"""
     global m_music_player
     
-    if m_music_player.is_alive() == True:
+    if m_music_player.is_alive(): # 简化条件判断
         m_music_player.stop_playback()
-        time.sleep(0.1)
-        m_music_player.join()  
+        # time.sleep(0.1) # Consider if this sleep is strictly necessary
+        # m_music_player.join() # join() might block longer than intended
     
     print("Music stopped")
-    return "BUZZER", "OFF", 0
+    return DEVICE_TYPES["BUZZER"], ACTION_TYPES["OFF"], 0 # 使用常量
 
 def set_volume(level):
     """Set music volume level"""
@@ -314,11 +316,11 @@ def set_volume(level):
             print(f"Volume set to {volume_level}%")
         else:
             # 如果音乐播放器未运行，启动它并设置音量
-            music_on(volume_level)
+            music_on(volume_level) # music_on 内部会处理 Buzzer pin
     else:
         music_off()
     
-    return "BUZZER", "VOLUME", volume_level
+    return DEVICE_TYPES["BUZZER"], ACTION_TYPES["VOLUME"], volume_level # 使用常量
 
 def all_off():
     """Turn off all devices"""
@@ -551,4 +553,22 @@ if __name__=="__main__":
     if interaction_logger:
         report_dir = interaction_logger.create_analysis_report()
         print(f"Interaction report saved to: {report_dir}")
+
+    try:
+        # Clean up GPIO resources on exit
+        m_light.cleanup()
+        # Assuming m_music_player might also have a cleanup method for GPIO
+        if hasattr(m_music_player, 'cleanup') and callable(getattr(m_music_player, 'cleanup')) :
+            m_music_player.cleanup()
+        GPIO.cleanup() # General cleanup for any other pins
+
+    except KeyboardInterrupt:
+        print("Program interrupted by user. Cleaning up...")
+    finally:
+        # Ensure cleanup happens even if other errors occur
+        if 'm_light' in globals() and hasattr(m_light, 'cleanup'):
+            m_light.cleanup()
+        if 'm_music_player' in globals() and hasattr(m_music_player, 'cleanup') and callable(getattr(m_music_player, 'cleanup')):
+             m_music_player.cleanup()
+        GPIO.cleanup() # General cleanup
 

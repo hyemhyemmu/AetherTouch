@@ -8,9 +8,14 @@ Used for easy pin reference across the project.
 
 # GPIO pins mapped to physical board pin numbers (BOARD numbering scheme)
 gpio_pins = {
+    # LED pins
+    'LED_PIN': 11,  # Physical pin 11 (often corresponds to GPIO17)
+
+    # Buzzer pins
+    'BUZZER_PIN': 12, # Physical pin 12 (often corresponds to GPIO18)
+    
     # I2C pins
     'SDA': 3,   # I2C Data
-    'SLC': 5,   # I2C Clock (alternative name for SCL)
     'SCL': 23,  # I2C Clock
     
     # SPI pins
@@ -31,21 +36,15 @@ gpio_pins = {
     'G4': 7,
     'G5': 29,
     'G6': 31,
-    'G12': 32,
+    'G12': 32, # Physical pin 32
     'G13': 33,
     'G16': 36,
-    'G17': 11,
-    'G18': 12,
     'G19': 35,
     'G20': 38,
     'G21': 40,
     'G22': 15,
     'G23': 16,
     'G24': 18,
-    'G25': 32,
     'G26': 37,
     'G27': 13
 }
-
-# For backward compatibility
-pin_dic = gpio_pins

@@ -1,6 +1,6 @@
 import threading
 import RPi.GPIO as GPIO
-from gpio_config import pin_dic
+from gpio_config import gpio_pins
 import numpy as np
 import time
 
@@ -13,6 +13,9 @@ class MusicPlayer(threading.Thread):
     Runs in a separate thread for background playback.
     Volume can be controlled by adjusting PWM duty cycle.
     """
+    # follow active PWM 
+    active_pwm = {}
+    
     def __init__(self, pin):
         """
         Initialize the music player
@@ -40,7 +43,19 @@ class MusicPlayer(threading.Thread):
         
         # Volume control (PWM duty cycle, 0-100)
         self.volume = 50
+        
+        # Make sure clear all the PWM in same GPIO
+        self._cleanup_pwm()
        
+    def _cleanup_pwm(self):
+        """clear PWM on current GPIO"""
+        if self.pin_buzzer in MusicPlayer.active_pwm:
+            try:
+                MusicPlayer.active_pwm[self.pin_buzzer].stop()
+                del MusicPlayer.active_pwm[self.pin_buzzer]
+            except:
+                pass
+    
     def load_music_file(self, file_music):
         """
         Load music data from file
@@ -120,25 +135,33 @@ class MusicPlayer(threading.Thread):
         """
         self.flag_stop = False
         
+        # make sure to clear old PWM before making a new one
+        self._cleanup_pwm()
+        
         # Define PWM object
         buzzer = GPIO.PWM(self.pin_buzzer, 440)
+        MusicPlayer.active_pwm[self.pin_buzzer] = buzzer
         buzzer.start(self.volume)
         
-        while True:
-            if self.flag_stop:
-                break
-                
-            for freq, beat in zip(self.freqs, self.beats):
+        try:
+            while True:
                 if self.flag_stop:
                     break
-                buzzer.ChangeFrequency(freq)
-                # Apply current volume setting
-                buzzer.ChangeDutyCycle(self.volume)
-                time.sleep(self.delay_beat * beat)
-                
-        buzzer.stop()        
-        GPIO.output(self.pin_buzzer, GPIO.LOW)
-        
+                    
+                for freq, beat in zip(self.freqs, self.beats):
+                    if self.flag_stop:
+                        break
+                    buzzer.ChangeFrequency(freq)
+                    # Apply current volume setting
+                    buzzer.ChangeDutyCycle(self.volume)
+                    time.sleep(self.delay_beat * beat)
+        finally:
+
+            buzzer.stop()
+            GPIO.output(self.pin_buzzer, GPIO.LOW)
+            if self.pin_buzzer in MusicPlayer.active_pwm:
+                del MusicPlayer.active_pwm[self.pin_buzzer]
+            
         self.flag_stop = False
 
 # For backward compatibility
@@ -149,12 +172,12 @@ if __name__ == "__main__":
     file = "music.txt"
     
     # Initialize music player
-    music_player = MusicPlayer(pin_dic['G18'])
+    music_player = MusicPlayer(gpio_pins['BUZZER_PIN'])
     
     print("Running music playback 1")
     if music_player.isAlive() == False:
         # No thread, create and start thread
-        music_player = MusicPlayer(pin_dic['G18'])
+        music_player = MusicPlayer(gpio_pins['BUZZER_PIN'])
         flag = music_player.load_music_file(file)
         music_player.setDaemon(True)
         music_player.start()
@@ -166,7 +189,7 @@ if __name__ == "__main__":
         music_player.join()
         
         # Reload
-        music_player = MusicPlayer(pin_dic['G18'])
+        music_player = MusicPlayer(gpio_pins['BUZZER_PIN'])
         flag = music_player.load_music_file(file)
         music_player.setDaemon(True)
         music_player.start()
@@ -176,7 +199,7 @@ if __name__ == "__main__":
     print("Running music playback 2")
     if music_player.isAlive() == False:
         # No thread, create and start thread
-        music_player = MusicPlayer(pin_dic['G18'])
+        music_player = MusicPlayer(gpio_pins['BUZZER_PIN'])
         flag = music_player.load_music_file(file)
         music_player.setDaemon(True)
         music_player.start()
@@ -188,7 +211,7 @@ if __name__ == "__main__":
         music_player.join()
         
         # Reload
-        music_player = MusicPlayer(pin_dic['G18'])
+        music_player = MusicPlayer(gpio_pins['BUZZER_PIN'])
         flag = music_player.load_music_file(file)
         music_player.setDaemon(True)
         music_player.start()
@@ -213,7 +236,7 @@ if __name__ == "__main__":
     print("Running music playback 3")
     if music_player.isAlive() == False:
         # No thread, create and start thread
-        music_player = MusicPlayer(pin_dic['G18'])
+        music_player = MusicPlayer(gpio_pins['BUZZER_PIN'])
         flag = music_player.load_music_file(file)
         music_player.setDaemon(True)
         music_player.start()
@@ -225,7 +248,7 @@ if __name__ == "__main__":
         music_player.join()
         
         # Reload
-        music_player = MusicPlayer(pin_dic['G18'])
+        music_player = MusicPlayer(gpio_pins['BUZZER_PIN'])
         flag = music_player.load_music_file(file)
         music_player.setDaemon(True)
         music_player.start()
