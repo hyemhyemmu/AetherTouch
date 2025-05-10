@@ -43,7 +43,7 @@ volume_level = 100
 m_light = LEDController(gpio_pins["G17"])
 
 # Define buzzer object
-m_runing_song = MusicPlayer(gpio_pins['G18'])
+m_music_player = MusicPlayer(gpio_pins['G18'])
 
 # The pretrained model file (users need to provide their own)
 DEFAULT_MODEL = "model.onnx"
@@ -249,42 +249,42 @@ def set_brightness(level):
 
 def music_on(volume=None):
     """Turn on music with optional volume level"""
-    global m_runing_song
+    global m_music_player
     global volume_level
     
     if volume is not None:
         volume_level = volume
     
-    if m_runing_song.isAlive() == False:
+    if m_music_player.is_alive() == False:
         # Create and start thread if not running
-        m_runing_song = MusicPlayer(gpio_pins['G18'])
-        m_runing_song.load_music_file(MUSIC_FILE)
-        m_runing_song.setDaemon(True)
-        m_runing_song.start()
+        m_music_player = MusicPlayer(gpio_pins['G18'])
+        m_music_player.load_music_file(MUSIC_FILE)
+        m_music_player.daemon = True
+        m_music_player.start()
         
     else: 
         # Restart if already playing
-        m_runing_song.stop_playback()
+        m_music_player.stop_playback()
         time.sleep(0.1)
-        m_runing_song.join()
+        m_music_player.join()
 
         # Reload and start
-        m_runing_song = MusicPlayer(gpio_pins['G18'])
-        m_runing_song.load_music_file(MUSIC_FILE)
-        m_runing_song.setDaemon(True)
-        m_runing_song.start()
+        m_music_player = MusicPlayer(gpio_pins['G18'])
+        m_music_player.load_music_file(MUSIC_FILE)
+        m_music_player.daemon = True
+        m_music_player.start()
     
     print(f"Music started (volume: {volume_level}%)")
     return "BUZZER", "ON", volume_level
     
 def music_off():
     """Turn off music"""
-    global m_runing_song
+    global m_music_player
     
-    if m_runing_song.isAlive() == True:
-        m_runing_song.stop_playback()
+    if m_music_player.isAlive() == True:
+        m_music_player.stop_playback()
         time.sleep(0.1)
-        m_runing_song.join()  
+        m_music_player.join()  
     
     print("Music stopped")
     return "BUZZER", "OFF", 0
@@ -435,7 +435,7 @@ if __name__=="__main__":
         interaction_logger = InteractionTracker()
     
     # YOLO model loading
-    dic_labels = {0:'led', 1:'buzzer', 2:'teeth'}
+    dic_labels = {0:'GPIO LED', 1:'buzzer', 2:'fist', 3:'open_palm', 4:'pinch', 5:'pointing', 6:'two_fingers'}
     model_h = MODEL_HEIGHT
     model_w = MODEL_WIDTH
     
@@ -481,7 +481,7 @@ if __name__=="__main__":
             
             # Object detection visualization
             for box, score, id in zip(det_boxes_show, scores_show, ids_show):
-                label = f'{dic_labels[id]}:{score:.2f}'
+                label = f'{dic_labels.get(id, f"Unknown-{id}")}:{score:.2f}'
                 plot_one_box(box, annotated_frame, color=(255,0,0), label=label, line_thickness=None)
             
             # Process gestures and interactions
