@@ -24,6 +24,7 @@ class MusicPlayer(threading.Thread):
         # Set buzzer pin mode
         self.pin_buzzer = pin
         GPIO.setmode(GPIO.BOARD)
+        GPIO.setwarnings(False)
         GPIO.setup(self.pin_buzzer, GPIO.OUT)
         
         # Time duration of one beat

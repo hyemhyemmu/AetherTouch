@@ -21,6 +21,9 @@ class LEDController:
         # Set GPIO mode to BOARD (physical pin numbering)
         GPIO.setmode(GPIO.BOARD)
         
+        # Disable GPIO warnings
+        GPIO.setwarnings(False)
+        
         # Configure pin as output
         GPIO.setup(self.pin, GPIO.OUT)
         
